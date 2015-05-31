@@ -1,0 +1,201 @@
+<?php
+
+// Find only tags
+function findTags($str=null) {
+    if ($str==null) { return false; }
+    $length = strlen($str);
+    $temp = ""; $state = 0; $found = array();
+    for($cnt=0;$cnt<$length;$cnt++) {
+        $chr = substr($str, $cnt, 1);
+        if ($chr == '<') {
+            if ($state == 0) { $state = 1; }
+            $temp .= $chr;
+        }
+        else if ($chr == '>') {
+            if ($state == 1) { $state = 0; }
+            $temp .= $chr;
+            $found[] = strval($temp);
+            $temp = "";
+        }
+        else {
+            if ($state == 1) {
+                $temp .= $chr;
+            }
+        }
+    }
+    return $found;
+}
+
+// Find tags and text
+function findNodes($str=null) {
+    if ($str==null) { return false; }
+    $length = strlen($str);
+    $temp = ""; $state = 0; $type = 0; $found = array(); $cleanup = array();
+    // Identify tags and text
+    for($cnt=0;$cnt<$length;$cnt++) {
+        $chr = substr($str, $cnt, 1);
+        if ($chr == '<') {
+            // If it's not within a tag
+            if ($state == 0) { $state = 1; }
+            if (strlen($temp) > 0) {
+                $found[] = array('type'=>'TXT', 'string'=>strval($temp));
+            }
+            $temp = $chr;
+        }
+        else if ($chr == '>') {
+            // If it's within a tag
+            if ($state == 1) {
+                $state = 0;
+                $temp .= $chr;
+                $found[] = array('type'=>'TAG', 'string'=>strval($temp));
+                $temp = "";
+            }
+            // If it's outside a tag
+            else {
+                if ($chr == "\r") { die(); }
+                $temp .= $chr;
+            }
+        }
+        else {
+            $temp .= $chr;
+        }
+    }
+    // Merge consecutive text nodes
+    $temp = "";
+    foreach($found as $node) {
+        if ($node['type'] == 'TAG') {
+            if (strlen($temp) > 0) {
+                $cleanup[] = $temp;
+                $temp = "";
+            }
+            $cleanup[] = $node['string'];
+        } else {
+            if (ord(substr($node['string'], 0, 1)) == 13 &&
+                ord(substr($node['string'], 1, 1)) == 10) {
+                continue;
+            }
+            $temp .= $node['string'];
+        }
+    }
+    if (strlen($temp) > 0) { $cleanup[] = $temp; }
+    return $cleanup;
+}
+
+function parseNodes($found=null) {
+    if ($found==null || is_array($found)==false) { return false; }
+    $parsed = array();
+    foreach($found as $item) {
+        $temp = array();
+        // Identify text-only nodes
+        if (substr($item, 0, 1) != '<' && substr($item, -1, 1) != '>') {
+            $temp['TYPE'] = 'T'; $temp['TXT'] = $item; $temp['TAG'] = false;
+            $parsed[] = $temp;
+            continue;
+        }
+        // Clean the greater then and less than characters
+        if (substr($item, 0, 1)=='<') { $item = substr($item, 1); }
+        if (substr($item, -1, 1)=='>') { $item = substr($item, 0, intval(strlen($item)-1)); }
+        // Determine what kind of tag it is
+        if (substr($item, 0, 1)=='/' ) {
+            $temp['TYPE'] = 'E';
+            $item = substr($item, 1);
+        }
+        else if (substr($item, -1, 1)=='/') {
+            $temp['TYPE'] = 'S';
+            $item = substr($item, 0, intval(strlen($item)-1));
+        }
+        else { $temp['TYPE'] = 'B'; }
+        // If the type is E skip further parsing
+        if ($temp['TYPE'] == 'E') {
+            $temp['TAG'] = $item;
+            $parsed[] = $temp;
+            continue;
+        }
+        // If the type is S or B there's a bit more
+        if (preg_match("/=/", $item)==false) {
+            $temp['TAG'] = $item;
+        }
+        else {
+            // Define the tag
+            $parts = split(" ", $item, 2);
+            $temp['TAG'] = $parts[0];
+            $temp['ATTR'] = array();
+            // Collect up attributes
+            $length = strlen($parts[1]);
+            $state = 0; $temp_key = ""; $temp_val = "";
+            for($cnt=0;$cnt<$length;$cnt++) {
+                $chr = substr($parts[1],$cnt,1);
+                if ($chr=='=') {
+                    if ($state==0) { $state = 1; }
+                    else { $temp_val .= $chr; }
+                }
+                else if ($chr=='"') {
+                    if ($state==1) { $state = 2; }
+                    else if ($state == 2) {
+                        $temp['ATTR'][] = array('key'=>strval($temp_key),
+                                                'val'=>strval($temp_val));
+                        $temp_key = "";
+                        $temp_val = "";
+                        $state = 0;
+                    }
+                }
+                else if ($chr==' ') {
+                    if ($state == 2) {
+                        $temp_val .= $chr;
+                    }
+                }
+                else {
+                    if ($state == 0) { $temp_key .= $chr; }
+                    else { $temp_val .= $chr; }
+                }
+            }
+        }
+        // Add it to the main list
+        $parsed[] = $temp;
+    }
+    return $parsed;
+}
+
+function parseHtml($html=null) {
+    if ($html==null) { return false; }
+    $tags = findNodes($html);
+    if (is_array($tags)==false) { return false; }
+    return parseNodes($tags);
+}
+
+function findSpecificTag($html=null, $tag=null, $type=null) {
+    if ($tag==null||$html==null) { return false; }
+    $tags = array();
+    if (is_string($html)) { $tags = parseHtml($html); }
+    else if (is_array($html)) { $tags = $html;}
+    else { $tags = false; }
+    
+    if ($tags==false) { return false; }
+    $tags_filtered = array();
+    if (isset($type)) { $type = strtoupper($type); }
+    foreach($tags as $t) {
+        if (isset($type)) { if ($type != $t['TYPE']) { continue; } }
+        if ($tag != $t['TAG']) { continue; }
+        $tags_filtered[] = $t;
+    }
+    if (count($tags_filtered) == 0) { return false; }
+    return $tags_filtered;
+}
+
+function findText($html=null) {
+    if ($html==null) { return false; }
+    $tags = array(); $text = array();
+    if (is_string($html)) { $tags = parseHtml($html); }
+    else if (is_array($html)) { $tags = $html;}
+    else { $tags = false; }
+    
+    if ($tags==false) { return false; }
+    foreach($tags as $t) {
+        if ($t['TAG']==false && $t['TYPE']=='T' && isset($t['TXT'])) {
+            $text[] = $t['TXT'];
+        }
+    }
+    return $text;
+}
+
+?>
