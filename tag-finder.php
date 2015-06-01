@@ -122,14 +122,17 @@ function parseNodes($found=null) {
             $temp['ATTR'] = array();
             // Collect up attributes
             $length = strlen($parts[1]);
-            $state = 0; $temp_key = ""; $temp_val = "";
+            $state = 0; $temp_key = ""; $temp_val = ""; $quotmrk = '"';
             for($cnt=0;$cnt<$length;$cnt++) {
                 $chr = substr($parts[1],$cnt,1);
                 if ($chr=='=') {
-                    if ($state==0) { $state = 1; }
+                    if ($state==0) {
+                        $state = 1;
+                        $quotmrk = substr($parts[1],$cnt+1,1);
+                    }
                     else { $temp_val .= $chr; }
                 }
-                else if ($chr=='"') {
+                else if ($chr==$quotmrk) {
                     if ($state==1) { $state = 2; }
                     else if ($state == 2) {
                         $temp['ATTR'][] = array('key'=>strval($temp_key),
