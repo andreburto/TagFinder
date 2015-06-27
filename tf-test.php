@@ -48,14 +48,40 @@ function test4() {
     return check_test($countP, 10, "Did not find 10 p tags");
 }
 
+// Fix root domains
 function test5() {
-    global $doc, $html;
-    return check_test(fixLinkDomain("/", "andrewburton.biz"),
+    check_test(fixLinkDomain("/", "andrewburton.biz"),
+               "http://andrewburton.biz/",
+               "Failed to fix root domain without protocol.");
+}
+function test6() {
+    return check_test(fixLinkDomain("/", "https://andrewburton.biz"),
+                      "https://andrewburton.biz/",
+                      "Failed to fix root domain with HTTPS protocol.");
+}
+function test7() {
+    return check_test(fixLinkDomain("/", "http://andrewburton.biz"),
                       "http://andrewburton.biz/",
-                      "Fixed domain.");
+                      "Failed to fix root domain with HTTP protocol.");
+}
+function test8() {
+    global $doc, $html;
+    $a = findSpecificTag($doc, 'a', 'B');
+    $url = strval($a[0]['ATTR'][0]['val']);
+    return check_test(fixLinkDomain($url, "andrewburton.biz", "https"),
+                      "https://andrewburton.biz/",
+                      "Failed to fix root domain with found link.");
+}
+
+// Go up a level
+function test9() {
+    return check_test(fixLinkDomain("../img/pics.jpg", "andrewburton.biz", "https"),
+                      "https://andrewburton.biz/img/pics.jpg",
+                      "Failed to fix domain with ../img/pics.jpg at the start.");    
 }
 
 // Variables
+$count = 1;
 $doc = null;
 $html=<<<EOL
 <!DOCTYPE html>
@@ -75,8 +101,6 @@ EOL;
 // Start
 printf("Test began: %s\n", date("Y-m-d H:i:s"));
 
-$count = 0;
-
 // TEST SET 1
 printf("Test TagFinder\n");
 // Perform TagFinder tests
@@ -88,6 +112,10 @@ test4();
 // TEST SET 2
 printf("Test TagFixer\n");
 // Perform TagFixer tests
-//test5();
+test5();
+test6();
+test7();
+test8();
+test9();
 
 ?>
