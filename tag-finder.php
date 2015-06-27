@@ -1,6 +1,10 @@
 <?php
 
-// Find only tags
+/*****
+ * DEPRECIATED: Replaced by findNodes function.
+ * @param string $str Block of HTML
+ * @return array Unparsed elements in an array for further parsing
+ *****/
 function findTags($str=null) {
     if ($str==null) { return false; }
     $length = strlen($str);
@@ -26,7 +30,11 @@ function findTags($str=null) {
     return $found;
 }
 
-// Find tags and text
+/*****
+ * Find tags and text elements in a block of HTML.
+ * @param string $str Block of HTML
+ * @return array Tag and text elements in an array for further parsing
+ *****/
 function findNodes($str=null) {
     if ($str==null) { return false; }
     $length = strlen($str);
@@ -52,7 +60,7 @@ function findNodes($str=null) {
             }
             // If it's outside a tag
             else {
-                if ($chr == "\r") { die(); }
+                if ($chr == "\r") { continue; }
                 $temp .= $chr;
             }
         }
@@ -81,6 +89,11 @@ function findNodes($str=null) {
     return $cleanup;
 }
 
+/*****
+ * Parses tag and text nodes, parses attributes, and places them in an array.
+ * @param array $found Array of tag and text nodes from findNodes() function
+ * @return array Fully parsed array of elements
+ *****/
 function parseNodes($found=null) {
     if ($found==null || is_array($found)==false) { return false; }
     $parsed = array();

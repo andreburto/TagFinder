@@ -88,6 +88,6 @@ test4();
 // TEST SET 2
 printf("Test TagFixer\n");
 // Perform TagFixer tests
-test5();
+//test5();
 
 ?>
