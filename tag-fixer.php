@@ -18,6 +18,30 @@ function hasPrefixProtocol($url=null) {
 }
 
 /*****
+ * Check a link and see if it works
+ * @param string $url This is the url to check
+ * @return int Returns a status code
+ *****/
+function checkLink($url=null) {
+    if ($url == null) { return false; }
+    // Initialize the curl call
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, false);
+    curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    // Execute the call and close the call
+    curl_exec($ch);
+    $status = intval(curl_getinfo($ch, CURLINFO_HTTP_CODE));
+    curl_close($ch);
+    // Return the code as an integer value
+    return $status;
+}
+
+/*****
  * Adds a domain to a relative link to check if it exists.
  * @param string $url The URL in a link
  * @param string $domain The domain for the link
@@ -65,8 +89,43 @@ function fixLinkDomain($url=null, $domain=null, $protocol=null) {
     return $retval;
 }
 
-function findBrokenLinks($html=null) {
+/*****
+ * Finds the broken links in a block of HTML.
+ * @param string $html Block of HTML code
+ * @param string $domain The base domain to use
+ * @param string $protocol The protocol you want to check
+ * @return array Returns an array of the url and status code for it
+ *****/
+function findBrokenLinks($html=null, $domain=null, $protocol=null) {
+    if ($html == null) { return false; }
+    // Convert the HTML string into an array of elements
+    $doc = parseHtml($html);
+    if ($doc == false) { return false; }
+    // Fish the opening link tags from array
+    $a = findSpecificTag($doc, 'a', 'B');
+    if ($a == false || count($a) == 0) { return false; }
     
+    $links = array();
+    foreach($a as $el) {
+        $url = getAttribute($el, "href");
+        $code = 999;
+        
+        // Add a domain if you can or need to do so
+        if ($domain != null && hasPrefixProtocol($url) == false) {
+            $url = fixLinkDomain($url, $domain, $protocol);
+        }
+        
+        // If there's a protocol prefix
+        if (hasPrefixProtocol($url) == true) { $code = checkLink($url); }
+        
+        // Add an entry to the array
+        $links[] = array('URL' => $url, 'CODE' => $code);
+    }
+    
+    // No links
+    if (count($links) == 0) { return false; }
+    // Links
+    return $links;
 }
 
 ?>

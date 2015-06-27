@@ -43,9 +43,10 @@ function test3() {
 // Count all the p tags
 function test4() {
     global $doc;
+    $pCount = 12;
     $p = findSpecificTag($doc, 'p');
     $countP = count($p);
-    return check_test($countP, 10, "Did not find 10 p tags");
+    return check_test($countP, $pCount, sprintf("Did not find %s p tags", $pCount));
 }
 
 // Fix root domains
@@ -80,6 +81,27 @@ function test9() {
                       "Failed to fix domain with ../img/pics.jpg at the start.");    
 }
 
+function test10() {
+    $s = checkLink("http://andrewburton.biz/");
+    return check_test($s, 200, sprintf("Status code: %s.", $s));
+}
+
+function test11() {
+    $s = checkLink("http://andrewburton.biz/noLinkHere");
+    return check_test($s, 404, sprintf("Status code: %s.", $s));
+}
+
+function test12() {
+    global $links;
+    return check_test(count($links), 2, "Not two links as expected.");
+}
+
+function test13() {
+    global $links;
+    return check_test($links[1]['CODE'], 404, "The broken link was not broken.");
+}
+
+
 // Variables
 $count = 1;
 $doc = null;
@@ -94,9 +116,13 @@ $html=<<<EOL
 <p>5 < 1</p>
 <hr width="300" />
 <p><a href="/" title='Home page'>Andy</a> was here.</p>
+<p><a href="http://andrewburton.biz/noLinkHere" title='Home page'>Andy</a> was here.</p>
 </body>
 </html>
 EOL;
+
+// Grab the links in the HTML
+$links = findBrokenLinks($html, "andrewburton.biz");
 
 // Start
 printf("Test began: %s\n", date("Y-m-d H:i:s"));
@@ -110,12 +136,27 @@ test3();
 test4();
 
 // TEST SET 2
-printf("Test TagFixer\n");
+printf("Test TagFixer: fixLinkDomain\n");
 // Perform TagFixer tests
 test5();
 test6();
 test7();
 test8();
 test9();
+
+// TEST SET 3
+printf("Test TagFixer: checkLinks\n");
+// Go go go
+test10();
+test11();
+
+// TEST SET 4
+printf("Test TagFixer: findBrokenLinks\n");
+// Links
+test12();
+test13();
+
+// Exit the program
+exit;
 
 ?>

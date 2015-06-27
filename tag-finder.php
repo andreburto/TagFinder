@@ -91,6 +91,7 @@ function findNodes($str=null) {
 
 /*****
  * Parses tag and text nodes, parses attributes, and places them in an array.
+ * Type of elements: T = text, S = single, B = beginning tag, E = end tag.
  * @param array $found Array of tag and text nodes from findNodes() function
  * @return array Fully parsed array of elements
  *****/
@@ -170,6 +171,24 @@ function parseNodes($found=null) {
         $parsed[] = $temp;
     }
     return $parsed;
+}
+
+/*****
+ * Gets an attribute from an element array based on name
+ * @param array $element The individual element from an array
+ * @param string $aname The name of the attribute
+ * @return string The value of the attribute
+ *****/
+function getAttribute($element=null, $aname=null) {
+    if ($element == null || $aname == null) { return false; }
+    if (is_array($element) == false) { return false; }
+    if (isset($element['ATTR']) == false) { return false; }
+    // Loop through and find the attribute
+    foreach($element['ATTR'] as $atts) {
+        // If the key is found return the value
+        if ($atts['key'] == $aname) { return $atts['val']; }
+    }
+    return false;
 }
 
 /*****
