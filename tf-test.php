@@ -1,17 +1,21 @@
 <?php
 
 include_once("tag-finder.php");
+include_once("tag-fixer.php");
 
 function check_test($val1, $val2, $msg) {
     global $count;
+    $retval = null;
     try {
         if ($val1 !== $val2) { throw new Exception($msg); }
         printf("Success %s.\n", $count);
-        return true;
+        $retval = true;
     } catch (Exception $ex) {
         printf("Fail %s: %s.\n", $count, $ex->getMessage());
-        return false;
+        $retval = false;
     }
+    $count++;
+    return $retval;
 }
 
 // See if findNodes returns an array
@@ -44,6 +48,13 @@ function test4() {
     return check_test($countP, 10, "Did not find 10 p tags");
 }
 
+function test5() {
+    global $doc, $html;
+    return check_test(fixLinkDomain("/", "andrewburton.biz"),
+                      "http://andrewburton.biz/",
+                      "Fixed domain.");
+}
+
 // Variables
 $doc = null;
 $html=<<<EOL
@@ -56,7 +67,7 @@ $html=<<<EOL
 <p>5 > 1</p>
 <p>5 < 1</p>
 <hr width="300" />
-<p><a href="http://andrewburton.biz" title='Home page'>Andy</a> was here.</p>
+<p><a href="/" title='Home page'>Andy</a> was here.</p>
 </body>
 </html>
 EOL;
@@ -64,15 +75,19 @@ EOL;
 // Start
 printf("Test began: %s\n", date("Y-m-d H:i:s"));
 
-// TEST SET 1
 $count = 0;
+
+// TEST SET 1
 printf("Test TagFinder\n");
-// Perform tests
-while(true) {
-    $count++;
-    $f = sprintf("test%s", $count);
-    if (function_exists($f) == false) { break; }
-    call_user_func($f);
-}
+// Perform TagFinder tests
+test1();
+test2();
+test3();
+test4();
+
+// TEST SET 2
+printf("Test TagFixer\n");
+// Perform TagFixer tests
+test5();
 
 ?>

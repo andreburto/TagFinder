@@ -159,6 +159,11 @@ function parseNodes($found=null) {
     return $parsed;
 }
 
+/*****
+ * Parses an HTML block into an array of tag data.
+ * @param string $html A block of HTML
+ * @return array Tag data
+ *****/
 function parseHtml($html=null) {
     if ($html==null) { return false; }
     $tags = findNodes($html);
@@ -166,14 +171,19 @@ function parseHtml($html=null) {
     return parseNodes($tags);
 }
 
+/*****
+ * Finds a specfic tag type, such as: a, img, or div.
+ * @param string $html A block of HTML
+ * @param string $tag The tag to find
+ * @param string $type Type of tag: T, E, S, B
+ *****/
 function findSpecificTag($html=null, $tag=null, $type=null) {
     if ($tag==null||$html==null) { return false; }
     $tags = array();
     if (is_string($html)) { $tags = parseHtml($html); }
     else if (is_array($html)) { $tags = $html;}
-    else { $tags = false; }
+    else { return false; }
     
-    if ($tags==false) { return false; }
     $tags_filtered = array();
     if (isset($type)) { $type = strtoupper($type); }
     foreach($tags as $t) {
@@ -185,6 +195,11 @@ function findSpecificTag($html=null, $tag=null, $type=null) {
     return $tags_filtered;
 }
 
+/*****
+ * Finds text nodes in the HTML.
+ * @param string $html A block of HTML
+ * @return array An array of text from the HTML
+ *****/
 function findText($html=null) {
     if ($html==null) { return false; }
     $tags = array(); $text = array();
