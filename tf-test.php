@@ -124,6 +124,8 @@ EOL;
 // Grab the links in the HTML
 $links = findBrokenLinks($html, "andrewburton.biz");
 
+
+
 // Start
 printf("Test began: %s\n", date("Y-m-d H:i:s"));
 
@@ -155,6 +157,11 @@ printf("Test TagFixer: findBrokenLinks\n");
 // Links
 test12();
 test13();
+
+// TEST SET 5
+printf("Test TagFixer: makeTag\n");
+//
+printf("None yet.\n");
 
 // Exit the program
 exit;

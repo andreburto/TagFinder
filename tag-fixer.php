@@ -128,4 +128,33 @@ function findBrokenLinks($html=null, $domain=null, $protocol=null) {
     return $links;
 }
 
+/*****
+ * Builds the string for a tag out of an element array.
+ * @param array $element The element in array format
+ * @return string The node in string format
+ *****/
+function makeTag($element=null) {
+    if (is_array($element) == false) { return false; }
+    // If it's text, return the string
+    if ($element['TAG'] == false) { return $element['TXT']; }
+    // If it's an End tag, just return that
+    if ($element['TYPE'] == 'E') { return sprintf("</%s>", $element['TAG']); }
+    // An array to push bits
+    $parts = array($element['TAG']);
+    // Collect attributes
+    if (isset($element['ATTR']) == true) {
+        $atts = array();
+        foreach($element['ATTR'] as $att) {
+            $parts[] = sprintf("%s=\"%s\"", $att['key'], $att['val']);
+        }
+    }
+    // Start the tag
+    $html = "<" . implode(" ", $parts);
+    if ($element['TYPE'] == 'S') { $html .= " /"; }
+    // End the tag
+    $html .= ">";
+    // Return the HTML as a string
+    return $html;
+}
+
 ?>
