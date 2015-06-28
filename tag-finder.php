@@ -60,7 +60,6 @@ function findNodes($str=null) {
             }
             // If it's outside a tag
             else {
-                if ($chr == "\r") { continue; }
                 $temp .= $chr;
             }
         }
@@ -78,10 +77,6 @@ function findNodes($str=null) {
             }
             $cleanup[] = $node['string'];
         } else {
-            if (ord(substr($node['string'], 0, 1)) == 13 &&
-                ord(substr($node['string'], 1, 1)) == 10) {
-                continue;
-            }
             $temp .= $node['string'];
         }
     }
