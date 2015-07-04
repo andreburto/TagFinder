@@ -94,20 +94,26 @@ function fixLinkDomain($url=null, $domain=null, $protocol=null) {
  * @param string $html Block of HTML code
  * @param string $domain The base domain to use
  * @param string $protocol The protocol you want to check
+ * @param string $attr Defaults to href
  * @return array Returns an array of the url and status code for it
  *****/
-function findBrokenLinks($html=null, $domain=null, $protocol=null) {
+function findBrokenLinks($html=null, $domain=null, $protocol=null, $attr="href") {
     if ($html == null) { return false; }
     // Convert the HTML string into an array of elements
     $doc = parseHtml($html);
     if ($doc == false) { return false; }
+    // Confirm the attribute type
+    if ($attr != "href" && $attr != "src") { return false; }
     // Fish the opening link tags from array
-    $a = findSpecificTag($doc, 'a', 'B');
+    $tag = ($attr=="href"?'a':'img');
+    $type = ($attr=="href"?'B':'S');
+    $a = findSpecificTag($doc, $tag, $type);
+    
     if ($a == false || count($a) == 0) { return false; }
     
     $links = array();
     foreach($a as $el) {
-        $url = getAttribute($el, "href");
+        $url = getAttribute($el, $attr);
         $code = 999;
         
         // Add a domain if you can or need to do so
